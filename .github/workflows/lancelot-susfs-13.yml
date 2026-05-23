@@ -46,9 +46,10 @@ jobs:
         cp $GITHUB_WORKSPACE/susfs_files/susfs.h include/linux/
 
         # Apply kernel VFS hooks patch (Linux 4.14 - works independently of KSU version)
-        patch -p1 -F 3 < $GITHUB_WORKSPACE/susfs_files/50_add_susfs_in_kernel-4.14.patch
+        # Use || true to allow non-zero exit from rejected hunks; we fix them below
+        patch -p1 -F 3 < $GITHUB_WORKSPACE/susfs_files/50_add_susfs_in_kernel-4.14.patch || true
 
-        # Fix rejected hunk in fs/open.c caused by patches.sh modifying same area
+        # Fix rejected hunks caused by patches.sh modifying same areas
         if [ -f "fs/open.c.rej" ]; then
           echo "[+] Fixing rejected hunk in fs/open.c..."
           # Add SUSFS variable declarations after 'unsigned int lookup_flags = LOOKUP_FOLLOW;'
