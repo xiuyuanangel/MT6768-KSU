@@ -31,14 +31,10 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/action_dir/kernel_tree
 
-        # Clone KernelSU and checkout v1.0.5 (flat files: core_hook.c, ksu.c, etc.)
+        # Clone KernelSU v1.0.5 (flat files: core_hook.c, ksu.c, etc.)
         # v2.0.0+ removed ksu_handle_prctl and requires GKI; v1.0.5 is the last
         # version with full non-GKI support AND ksu_handle_prctl for SUSFS
-        git clone https://github.com/tiann/KernelSU --depth=1 KernelSU_src
-        cd KernelSU_src
-        git fetch --depth=1 origin v1.0.5
-        git checkout v1.0.5
-        cd ..
+        git clone https://github.com/tiann/KernelSU --depth=1 --branch v1.0.5 KernelSU_src
 
         # Old-style integration: copy KernelSU kernel files directly into kernel/
         cp KernelSU_src/kernel/*.c kernel/
