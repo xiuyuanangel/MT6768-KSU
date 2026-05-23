@@ -1,0 +1,174 @@
+
+name: Lancelot A13 KernelSU-Next SUSFS
+
+on:
+  workflow_dispatch:
+  push:
+  schedule:
+    - cron: "0 0 * * 6"
+
+jobs:
+  build:
+    name: Build Redmi 9 KernelSU-Next SUSFS Kernel
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Prepare Environment
+        run: |
+          echo "BUILD_TIME=$(TZ=Asia/Shanghai date '+%Y%m%d-%H%M')" >> $GITHUB_ENV
+
+          sudo apt update
+
+          sudo apt install -y \
+            git ccache automake flex lzop bison gperf build-essential \
+            zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 \
+            libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools \
+            pngcrush schedtool dpkg-dev liblz4-tool make optipng \
+            maven libssl-dev pwgen libswitch-perl policycoreutils \
+            minicom libxml-sax-base-perl libxml-simple-perl bc \
+            libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev \
+            libgl1-mesa-dev xsltproc unzip device-tree-compiler \
+            python2 python3 python-is-python3
+
+          mkdir -p $GITHUB_WORKSPACE/workdir
+
+      - name: Clone Proton Clang
+        run: |
+          cd $GITHUB_WORKSPACE/workdir
+          git clone --depth=1 https://github.com/kdrag0n/proton-clang
+
+      - name: Clone Kernel Source
+        run: |
+          cd $GITHUB_WORKSPACE/workdir
+
+          git clone \
+            --depth=1 \
+            -b 13.0 \
+            https://github.com/crdroidandroid/android_kernel_xiaomi_mt6768 \
+            kernel_tree
+
+      - name: Setup KernelSU-Next Legacy SUSFS
+        run: |
+          cd $GITHUB_WORKSPACE/workdir/kernel_tree
+
+          rm -rf KernelSU
+
+          git clone \
+            --depth=1 \
+            -b legacy-susfs \
+            https://github.com/KernelSU-Next/KernelSU-Next.git \
+            KernelSU
+
+      - name: Clone SUSFS
+        run: |
+          cd $GITHUB_WORKSPACE/workdir
+
+          git clone \
+            --depth=1 \
+            https://github.com/sidex15/susfs4ksu.git
+
+      - name: Apply SUSFS Patches
+        run: |
+          cd $GITHUB_WORKSPACE/workdir
+
+          cp -r susfs4ksu/kernel_patches/fs/* kernel_tree/fs/
+
+          cd kernel_tree
+
+          if ! grep -q 'susfs.o' fs/Makefile; then
+            echo 'obj-y += susfs.o' >> fs/Makefile
+          fi
+
+          if ! grep -q 'config KSU_SUSFS' fs/Kconfig; then
+            cat >> fs/Kconfig << 'EOF'
+          config KSU_SUSFS
+              bool "KernelSU SUSFS"
+              default y
+          EOF
+          fi
+
+      - name: Apply Android 13 SUSFS Fixes
+        run: |
+          cd $GITHUB_WORKSPACE/workdir/kernel_tree
+
+          if ! grep -q 'linux/nsproxy.h' fs/susfs.c; then
+            sed -i '1i #include <linux/nsproxy.h>' fs/susfs.c
+          fi
+
+          if ! grep -q 'linux/mount.h' fs/susfs.c; then
+            sed -i '1i #include <linux/mount.h>' fs/susfs.c
+          fi
+
+          sed -i 's/task->nsproxy/current->nsproxy/g' fs/susfs.c || true
+
+      - name: Enable KernelSU + SUSFS Configs
+        run: |
+          cd $GITHUB_WORKSPACE/workdir/kernel_tree
+
+          DEFCONFIG=arch/arm64/configs/lancelot_defconfig
+
+          echo 'CONFIG_KSU=y' >> $DEFCONFIG
+          echo 'CONFIG_KSU_SUSFS=y' >> $DEFCONFIG
+          echo 'CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y' >> $DEFCONFIG
+          echo 'CONFIG_KSU_SUSFS_SPOOF_UNAME=y' >> $DEFCONFIG
+
+          echo 'CONFIG_OVERLAY_FS=y' >> $DEFCONFIG
+          echo 'CONFIG_TMPFS=y' >> $DEFCONFIG
+          echo 'CONFIG_TMPFS_XATTR=y' >> $DEFCONFIG
+
+          echo 'CONFIG_KALLSYMS=y' >> $DEFCONFIG
+          echo 'CONFIG_KALLSYMS_ALL=y' >> $DEFCONFIG
+
+      - name: Build Kernel
+        run: |
+          cd $GITHUB_WORKSPACE/workdir/kernel_tree
+
+          export PATH=$GITHUB_WORKSPACE/workdir/proton-clang/bin:$PATH
+
+          export ARCH=arm64
+          export SUBARCH=arm64
+
+          export KBUILD_BUILD_HOST=GitHub
+          export KBUILD_BUILD_USER=KernelSU
+
+          make O=out ARCH=arm64 lancelot_defconfig
+
+          make -j$(nproc --all) \
+            O=out \
+            ARCH=arm64 \
+            CC=clang \
+            LD=ld.lld \
+            AR=llvm-ar \
+            NM=llvm-nm \
+            OBJCOPY=llvm-objcopy \
+            OBJDUMP=llvm-objdump \
+            STRIP=llvm-strip \
+            CROSS_COMPILE=aarch64-linux-gnu- \
+            CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+
+      - name: Verify SUSFS
+        run: |
+          cd $GITHUB_WORKSPACE/workdir/kernel_tree
+
+          strings out/arch/arm64/boot/Image.gz-dtb | grep susfs || true
+
+      - name: Pack AnyKernel3
+        run: |
+          cd $GITHUB_WORKSPACE/workdir
+
+          git clone --depth=1 https://github.com/osm0sis/AnyKernel3
+
+          sed -i 's/do.devicecheck=1/do.devicecheck=0/g' AnyKernel3/anykernel.sh
+          sed -i 's|BLOCK=/dev/block/platform/omap/omap_hsmmc.0/by-name/boot;|BLOCK=auto;|g' AnyKernel3/anykernel.sh
+          sed -i 's/is_slot_device=0;/is_slot_device=auto;/g' AnyKernel3/anykernel.sh
+
+          cp kernel_tree/out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
+
+          rm -rf AnyKernel3/.git
+          rm -rf AnyKernel3/README.md
+
+      - name: Upload Kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: Lancelot-KSUN-SUSFS-${{ env.BUILD_TIME }}
+          path: workdir/AnyKernel3/*
