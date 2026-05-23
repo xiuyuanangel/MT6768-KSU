@@ -42,6 +42,10 @@ jobs:
         cp -r KernelSU_src/kernel/selinux kernel/
         cp -r KernelSU_src/kernel/include kernel/
 
+        # Fix include paths in kernel_compat.h (v1.0.5 has "ss/policydb.h" which
+        # relies on -I$(src)/selinux from KSU Makefile; fix to explicit path)
+        sed -i 's|#include "ss/policydb.h"|#include "selinux/ss/policydb.h"|' kernel/kernel_compat.h
+
         # Append KSU Kconfig entries to kernel/Kconfig
         echo "" >> kernel/Kconfig
         echo "config KSU" >> kernel/Kconfig
