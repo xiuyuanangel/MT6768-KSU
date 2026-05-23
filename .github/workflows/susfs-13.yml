@@ -35,7 +35,7 @@ jobs:
     - name: Patching kernel tree for susfs4KSU support
       run: |
         cd $GITHUB_WORKSPACE/action_dir/kernel_tree
-        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v3.2.4
         
         # Apply susfs patches
         bash $GITHUB_WORKSPACE/action_dir/susfs4ksu/kernel-patches/apply_susfs_patch.sh $GITHUB_WORKSPACE/action_dir/kernel_tree || true
