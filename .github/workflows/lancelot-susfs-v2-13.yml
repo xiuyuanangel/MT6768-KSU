@@ -45,13 +45,6 @@ jobs:
           https://github.com/crdroidandroid/android_kernel_xiaomi_mt6768 \
           -b 13.0 kernel_tree --depth=1
 
-    - name: Clone SUSFS source
-      run: |
-        cd $GITHUB_WORKSPACE
-
-        rm -rf susfs_files
-        git clone https://gitlab.com/simonpunk/susfs4ksu.git susfs_files --depth=1
-
     - name: Installing KernelSU v1.0.5 (non-GKI compatible)
       run: |
         cd $GITHUB_WORKSPACE/action_dir/kernel_tree
