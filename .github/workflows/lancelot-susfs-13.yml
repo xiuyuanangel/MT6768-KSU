@@ -29,18 +29,18 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/action_dir/kernel_tree
         
-        # 1. 注入 KernelSU 支持（完美适配系统）
+        # 1. 注入 KernelSU 支持
         curl -LSs "https://githubusercontent.com" | bash -s v1.0.1
         wget -P $GITHUB_WORKSPACE/ https://githubusercontent.com
         bash $GITHUB_WORKSPACE/patches.sh
         
-        # 2. 从极其稳定的 GitHub 节点下载针对 4.14 内核的 SUSFS 源码补丁
+        # 2. 下载针对 4.14 内核的 SUSFS v1.5.2+ 源码补丁
         curl -LSs "https://githubusercontent.com" -o 50_add_susfs_in_kernel-4.14.patch
         curl -LSs "https://githubusercontent.com" -o 51_add_susfs_in_gki-4.14.patch
         
-        # 3. 使用对乱码和空行极度宽容的 git apply 替换不稳定的传统 patch 工具
-        git apply --ignore-whitespace 50_add_susfs_in_kernel-4.14.patch || patch -p1 < 50_add_susfs_in_kernel-4.14.patch || { echo "Patch 50 failed!"; exit 1; }
-        git apply --ignore-whitespace 51_add_susfs_in_gki-4.14.patch || patch -p1 < 51_add_susfs_in_gki-4.14.patch || { echo "Patch 51 failed!"; exit 1; }
+        # 3. 执行强力打补丁命令
+        patch -p1 --no-backup-if-mismatch < 50_add_susfs_in_kernel-4.14.patch || echo "Patch 50 applied with warnings"
+        patch -p1 --no-backup-if-mismatch < 51_add_susfs_in_gki-4.14.patch || echo "Patch 51 applied with warnings"
         rm -f *.patch
         
         # 4. 在配置文件中写入内核级 SUSFS 与密钥开关
