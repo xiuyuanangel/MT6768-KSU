@@ -40,7 +40,7 @@ jobs:
     - name: Cloning SUSFS4KSU
       run: |
         cd $GITHUB_WORKSPACE/action_dir
-        git clone https://gitlab.com/simonpunk/susfs4ksu -b main susfs4ksu --depth=1
+        git clone https://gitlab.com/simonpunk/susfs4ksu -b master susfs4ksu --depth=1
 
     - name: Patching kernel tree for SUSFS support
       run: |
