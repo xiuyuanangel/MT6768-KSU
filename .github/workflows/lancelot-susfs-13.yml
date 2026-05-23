@@ -30,54 +30,33 @@ jobs:
         cd $GITHUB_WORKSPACE/action_dir
         git clone https://github.com/crdroidandroid/android_kernel_xiaomi_mt6768 -b 13.0 kernel_tree --depth=1
 
-    - name: Installing KernelSU v0.9.5 (old-style integration)
+    - name: Installing KernelSU v3.2.4
       run: |
         cd $GITHUB_WORKSPACE/action_dir/kernel_tree
-
-        # Clone KernelSU and checkout v0.9.5 (files are flat in kernel/ directory)
-        git clone https://github.com/tiann/KernelSU --depth=1 KernelSU_src
-        cd KernelSU_src
-        git fetch --depth=1 origin v0.9.5
-        git checkout v0.9.5
-        cd ..
-
-        # Old-style integration: copy KernelSU kernel files directly into kernel/ directory
-        # This matches the structure expected by SUSFS patches
-        cp KernelSU_src/kernel/*.c kernel/
-        cp KernelSU_src/kernel/*.h kernel/
-        cp -r KernelSU_src/kernel/selinux kernel/
-        cp -r KernelSU_src/kernel/include kernel/
-
-        # Append KSU Kconfig entries to kernel/Kconfig
-        echo "" >> kernel/Kconfig
-        echo "config KSU" >> kernel/Kconfig
-        echo "    bool \"KernelSU\"" >> kernel/Kconfig
-        echo "" >> kernel/Kconfig
-        echo "config KSU_DEBUG" >> kernel/Kconfig
-        echo "    bool \"KernelSU debug mode\"" >> kernel/Kconfig
-
-        # Append KSU objects and flags to kernel/Makefile
-        echo "" >> kernel/Makefile
-        echo "obj-y += core_hook.o ksu.o allowlist.o apk_sign.o throne_tracker.o sucompat.o embed_ksud.o kernel_compat.o" >> kernel/Makefile
-        echo "ccflags-y += -DCONFIG_KSU -DCONFIG_KSU_WITH_KPROBES -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-int-conversion -Wno-gcc-compat" >> kernel/Makefile
-
-        # Apply KSU VFS hook patches (adds ksu hooks to exec/open/read/stat/input)
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v3.2.4
         wget -P $GITHUB_WORKSPACE/ https://raw.githubusercontent.com/xiaoleGun/KernelSU_Action/main/patches/patches.sh
         bash $GITHUB_WORKSPACE/patches.sh
+
+    - name: Cloning SUSFS4KSU
+      run: |
+        cd $GITHUB_WORKSPACE/action_dir
+        git clone https://gitlab.com/simonpunk/susfs4ksu -b main susfs4ksu --depth=1
 
     - name: Patching kernel tree for SUSFS support
       run: |
         cd $GITHUB_WORKSPACE/action_dir/kernel_tree
 
+        SUSFS_DIR=$GITHUB_WORKSPACE/action_dir/susfs4ksu/kernel_patches
+
         # Copy susfs source files into kernel tree
-        cp $GITHUB_WORKSPACE/susfs_files/susfs.c fs/
-        cp $GITHUB_WORKSPACE/susfs_files/susfs.h include/linux/
+        cp $SUSFS_DIR/fs/susfs.c fs/
+        cp $SUSFS_DIR/include/linux/susfs.h include/linux/
 
-        # Apply SUSFS KSU integration patch (patches files in kernel/ directory)
-        patch -p1 -F 3 < $GITHUB_WORKSPACE/susfs_files/10_enable_susfs_for_ksu.patch
+        # Apply KernelSU integration patch (targets KernelSU/kernel/ - v3.x compatible)
+        patch -p1 -F 3 < $SUSFS_DIR/KernelSU/10_enable_susfs_for_ksu.patch
 
-        # Apply SUSFS kernel VFS hooks patch (patches kernel VFS layer, Linux 4.14)
-        patch -p1 -F 3 < $GITHUB_WORKSPACE/susfs_files/50_add_susfs_in_kernel-4.14.patch
+        # Apply kernel VFS hooks patch (Linux 4.14)
+        patch -p1 -F 3 < $SUSFS_DIR/50_add_susfs_in_kernel-4.14.patch
 
         # Add SUSFS and required kernel configs to defconfig
         echo "CONFIG_KSU_SUSFS=y" >> arch/arm64/configs/lancelot_defconfig
@@ -88,12 +67,6 @@ jobs:
         echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> arch/arm64/configs/lancelot_defconfig
         echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> arch/arm64/configs/lancelot_defconfig
         echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> arch/arm64/configs/lancelot_defconfig
-
-        # Enable KernelSU and related configs
-        echo "CONFIG_KSU=y" >> arch/arm64/configs/lancelot_defconfig
-        echo "CONFIG_OVERLAY_FS=y" >> arch/arm64/configs/lancelot_defconfig
-        echo "CONFIG_KALLSYMS=y" >> arch/arm64/configs/lancelot_defconfig
-        echo "CONFIG_KALLSYMS_ALL=y" >> arch/arm64/configs/lancelot_defconfig
 
     - name: Building kernel
       run: |
