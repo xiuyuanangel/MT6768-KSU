@@ -283,9 +283,24 @@ cat > security/selinux/flask.h << 'FLASK_EOF'
 #define SECCLASS_X_CLIENT_WINDOW2 77
 #define SECCLASS_MAX            78
 
+/* Initial SID definitions (also needed by sidtab.h) */
+#define SECINITSID_KERNEL      1
+#define SECINITSID_SECURITY   2
+#define SECINITSID_UNLABELED  3
+#define SECINITSID_FS          4
+#define SECINITSID_FILE        5
+#define SECINITSID_FILE_LABELS 6
+#define SECINITSID_INIT        7
+#define SECINITSID_ANY_SOCKET 8
+#define SECINITSID_PORT        9
+#define SECINITSID_NETMSG     10
+#define SECINITSID_BDEV       11
+#define SECINITSID_DEVNULL    12
+#define SECINITSID_NUM        13
+
 #endif /* _FLASK_H_ */
 FLASK_EOF
-echo "Generated security/selinux/flask.h"
+echo "Generated security/selinux/flask.h (with SECINITSID_NUM)"
 
 # ============================================================
 # initial_sid.h - Initial SID 宏定义
