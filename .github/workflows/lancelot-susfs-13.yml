@@ -48,6 +48,18 @@ jobs:
         # Apply kernel VFS hooks patch (Linux 4.14 - works independently of KSU version)
         patch -p1 -F 3 < $GITHUB_WORKSPACE/susfs_files/50_add_susfs_in_kernel-4.14.patch
 
+        # Fix rejected hunk in fs/open.c caused by patches.sh modifying same area
+        if [ -f "fs/open.c.rej" ]; then
+          echo "[+] Fixing rejected hunk in fs/open.c..."
+          # Add SUSFS variable declarations after 'unsigned int lookup_flags = LOOKUP_FOLLOW;'
+          # (the patches.sh already added ksu_handle_faccessat so context shifted)
+          sed -i '/unsigned int lookup_flags = LOOKUP_FOLLOW;$/a \\n#ifdef CONFIG_KSU_SUSFS_SUS_PATH\n       struct filename* fname;\n       int status;\n       int error;\n#endif' fs/open.c
+          # Add SUSFS path check before 'if (mode & ~S_IRWXO)'
+          sed -i '/if (mode & ~S_IRWXO)/i #ifdef CONFIG_KSU_SUSFS_SUS_PATH\n       fname = getname_safe(filename);\n       status = susfs_sus_path_by_filename(fname, &error, SYSCALL_FAMILY_ALL_ENOENT);\n       putname_safe(fname);\n       if (status) {\n              return error;\n       }\n#endif' fs/open.c
+          rm -f fs/open.c.rej
+          echo "  Done fixing fs/open.c."
+        fi
+
         # Run manual v3.x integration script (replaces old 10_enable_susfs_for_ksu.patch)
         bash $GITHUB_WORKSPACE/susfs_files/patch_ksu_v3x_for_susfs.sh
 

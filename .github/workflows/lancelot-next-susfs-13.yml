@@ -1,4 +1,3 @@
-
 name: Lancelot A13 KernelSU-Next SUSFS
 
 on:
@@ -35,7 +34,10 @@ jobs:
       - name: Clone Proton Clang
         run: |
           cd $GITHUB_WORKSPACE/workdir
-          git clone --depth=1 https://github.com/kdrag0n/proton-clang
+
+          git clone \
+            --depth=1 \
+            https://github.com/kdrag0n/proton-clang
 
       - name: Clone Kernel Source
         run: |
@@ -65,13 +67,18 @@ jobs:
 
           git clone \
             --depth=1 \
-            https://github.com/sidex15/susfs4ksu.git
+            -b kernel-4.14 \
+            https://gitlab.com/simonpunk/susfs4ksu.git
 
       - name: Apply SUSFS Patches
         run: |
           cd $GITHUB_WORKSPACE/workdir
 
           cp -r susfs4ksu/kernel_patches/fs/* kernel_tree/fs/
+
+          cp \
+            susfs4ksu/kernel_patches/include/linux/susfs.h \
+            kernel_tree/include/linux/
 
           cd kernel_tree
 
@@ -81,10 +88,12 @@ jobs:
 
           if ! grep -q 'config KSU_SUSFS' fs/Kconfig; then
             cat >> fs/Kconfig << 'EOF'
-          config KSU_SUSFS
-              bool "KernelSU SUSFS"
-              default y
-          EOF
+
+            config KSU_SUSFS
+                bool "KernelSU SUSFS"
+                default y
+
+            EOF
           fi
 
       - name: Apply Android 13 SUSFS Fixes
@@ -100,6 +109,10 @@ jobs:
           fi
 
           sed -i 's/task->nsproxy/current->nsproxy/g' fs/susfs.c || true
+
+          find KernelSU -type f | while read file; do
+            sed -i 's/#ifdef CONFIG_KPROBES/#if defined(CONFIG_KPROBES) \&\& 0/g' "$file" || true
+          done
 
       - name: Enable KernelSU + SUSFS Configs
         run: |
@@ -156,13 +169,23 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/workdir
 
-          git clone --depth=1 https://github.com/osm0sis/AnyKernel3
+          git clone \
+            --depth=1 \
+            https://github.com/osm0sis/AnyKernel3
 
           sed -i 's/do.devicecheck=1/do.devicecheck=0/g' AnyKernel3/anykernel.sh
-          sed -i 's|BLOCK=/dev/block/platform/omap/omap_hsmmc.0/by-name/boot;|BLOCK=auto;|g' AnyKernel3/anykernel.sh
-          sed -i 's/is_slot_device=0;/is_slot_device=auto;/g' AnyKernel3/anykernel.sh
 
-          cp kernel_tree/out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
+          sed -i \
+            's|BLOCK=/dev/block/platform/omap/omap_hsmmc.0/by-name/boot;|BLOCK=auto;|g' \
+            AnyKernel3/anykernel.sh
+
+          sed -i \
+            's/is_slot_device=0;/is_slot_device=auto;/g' \
+            AnyKernel3/anykernel.sh
+
+          cp \
+            kernel_tree/out/arch/arm64/boot/Image.gz-dtb \
+            AnyKernel3/
 
           rm -rf AnyKernel3/.git
           rm -rf AnyKernel3/README.md
