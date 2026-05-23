@@ -1,4 +1,4 @@
-name: Build Redmi 9 KernelSU SUSFS
+name: Build Redmi9 KernelSU-Next SUSFS
 
 on:
   workflow_dispatch:
@@ -18,17 +18,11 @@ jobs:
           sudo apt update
 
           sudo apt install -y \
-            git ccache automake flex lzop bison gperf build-essential \
-            zip unzip curl wget rsync bc \
-            zip curl zlib1g-dev g++-multilib \
-            libxml2-utils bzip2 libbz2-dev libbz2-1.0 \
-            squashfs-tools pngcrush schedtool dpkg-dev \
-            liblz4-tool make optipng maven libssl-dev \
-            pwgen libswitch-perl policycoreutils minicom \
-            libc6-dev-i386 lib32ncurses5-dev libx11-dev \
-            lib32z-dev libgl1-mesa-dev xsltproc \
-            python3 python-is-python3 \
-            device-tree-compiler p7zip-full
+            git curl wget zip unzip rsync bc ccache \
+            build-essential flex bison gperf gcc-multilib \
+            g++-multilib libc6-dev-i386 lib32ncurses5-dev \
+            lib32z1-dev libelf-dev libssl-dev \
+            python3 device-tree-compiler p7zip-full
 
           mkdir -p $GITHUB_WORKSPACE/workdir
 
@@ -50,17 +44,13 @@ jobs:
             --depth=1 \
             https://github.com/kdrag0n/proton-clang
 
-      - name: Setup KernelSU-Next
+      - name: Integrate KernelSU-Next
         run: |
           cd $GITHUB_WORKSPACE/workdir/kernel_tree
 
-          rm -rf KernelSU
-
-          git clone \
-            --depth=1 \
-            -b legacy-susfs \
-            https://github.com/KernelSU-Next/KernelSU-Next.git \
-            KernelSU
+          curl -LSs \
+          "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/refs/heads/legacy-susfs/kernel/setup.sh" \
+          | bash -
 
       - name: Clone SUSFS
         run: |
@@ -92,8 +82,13 @@ jobs:
           grep -q "susfs.o" fs/Makefile || \
           echo 'obj-y += susfs.o' >> fs/Makefile
 
-            grep -q "config KSU_SUSFS" fs/Kconfig || \
-            echo -e "\nconfig KSU_SUSFS\n\tbool \"KernelSU SUSFS\"\n\tdefault y\n" >> fs/Kconfig
+          if ! grep -q "config KSU_SUSFS" fs/Kconfig; then
+            echo '' >> fs/Kconfig
+            echo 'config KSU_SUSFS' >> fs/Kconfig
+            echo '    bool "KernelSU SUSFS"' >> fs/Kconfig
+            echo '    default y' >> fs/Kconfig
+            echo '' >> fs/Kconfig
+          fi
 
       - name: Android13 SUSFS Fix
         run: |
@@ -131,6 +126,7 @@ jobs:
           DEFCONFIG=arch/arm64/configs/lancelot_defconfig
 
           echo 'CONFIG_KSU=y' >> $DEFCONFIG
+          echo 'CONFIG_KSU_MANUAL_HOOK=y' >> $DEFCONFIG
 
           echo 'CONFIG_KSU_SUSFS=y' >> $DEFCONFIG
           echo 'CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y' >> $DEFCONFIG
@@ -175,13 +171,13 @@ jobs:
             CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
             2>&1 | tee build.log
 
-      - name: Verify Image
+      - name: Verify KernelSU
         run: |
           cd $GITHUB_WORKSPACE/workdir/kernel_tree
 
-          ls -lh out/arch/arm64/boot/
+          strings out/arch/arm64/boot/Image.gz-dtb | grep "KernelSU" || true
 
-          test -f out/arch/arm64/boot/Image.gz-dtb
+          strings out/arch/arm64/boot/Image.gz-dtb | grep "susfs" || true
 
       - name: Clone AnyKernel3
         run: |
@@ -197,26 +193,16 @@ jobs:
 
           sed -i 's/do.devicecheck=1/do.devicecheck=0/g' anykernel.sh
 
-          sed -i \
-            's|BLOCK=/dev/block/platform/omap/omap_hsmmc.0/by-name/boot;|BLOCK=auto;|g' \
-            anykernel.sh
-
-          sed -i \
-            's/is_slot_device=0;/is_slot_device=auto;/g' \
-            anykernel.sh
-
           cp \
             ../kernel_tree/out/arch/arm64/boot/Image.gz-dtb \
             ./
-      
+
       - name: Verify AnyKernel3
         run: |
           cd $GITHUB_WORKSPACE/workdir/AnyKernel3
 
-          ls -R META-INF
-
           test -f META-INF/com/google/android/update-binary
-      
+
       - name: Create Flashable ZIP
         run: |
           cd $GITHUB_WORKSPACE/workdir
@@ -225,11 +211,11 @@ jobs:
 
           cd AnyKernel3
 
-          rm -rf .git
-
           chmod -R 755 META-INF
-          chmod 755 tools/*
           chmod 755 anykernel.sh
+          chmod -R 755 tools
+
+          rm -rf .git
 
           zip -r9 \
             ../release/Redmi9-KSU-SUSFS-${BUILD_TIME}.zip \
@@ -237,7 +223,7 @@ jobs:
             -x "*.git*" \
             -x "*README*"
 
-      - name: Upload Flashable ZIP
+      - name: Upload ZIP
         uses: actions/upload-artifact@v4
         with:
           name: Redmi9-KSU-SUSFS-${{ env.BUILD_TIME }}

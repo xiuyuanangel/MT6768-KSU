@@ -1,6 +1,7 @@
 name: Lancelot KSU/SUSFS Supported A13 Kernel from CRDroid
 on:
   workflow_dispatch:
+  push:
 
 jobs:
   build:
@@ -44,7 +45,6 @@ jobs:
 
         # Fix include path: "ss/policydb.h" is from kernel's security/selinux/ss/, not from KSU source
         # The original KSU Makefile added -I$(srctree)/security/selinux, so we need it too
-        sed -i 's|obj-y += core_hook.o|ccflags-y += -I$(srctree)/security/selinux\nobj-y += core_hook.o|' kernel/Makefile
 
         # Append KSU Kconfig entries to kernel/Kconfig
         echo "" >> kernel/Kconfig
@@ -56,6 +56,7 @@ jobs:
 
         # Append KSU objects to kernel/Makefile
         echo "" >> kernel/Makefile
+        echo "ccflags-y += -I\$(srctree)/security/selinux" >> kernel/Makefile
         echo "obj-y += core_hook.o ksu.o allowlist.o apk_sign.o throne_tracker.o sucompat.o embed_ksud.o kernel_compat.o" >> kernel/Makefile
         echo "ccflags-y += -DCONFIG_KSU -DCONFIG_KSU_WITH_KPROBES -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-int-conversion -Wno-gcc-compat" >> kernel/Makefile
 
