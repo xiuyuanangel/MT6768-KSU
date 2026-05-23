@@ -1,7 +1,6 @@
 name: Lancelot KSU/SUSFS Supported A13 Kernel from CRDroid
 on:
-  schedule:
-  - cron: "0 0 * * 6"
+  workflow_dispatch:
 
 jobs:
   build:
