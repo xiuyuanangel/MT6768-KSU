@@ -208,7 +208,15 @@ jobs:
           cp \
             ../kernel_tree/out/arch/arm64/boot/Image.gz-dtb \
             ./
+      
+      - name: Verify AnyKernel3
+        run: |
+          cd $GITHUB_WORKSPACE/workdir/AnyKernel3
 
+          ls -R META-INF
+
+          test -f META-INF/com/google/android/update-binary
+      
       - name: Create Flashable ZIP
         run: |
           cd $GITHUB_WORKSPACE/workdir
@@ -219,10 +227,15 @@ jobs:
 
           rm -rf .git
 
-          7z a \
-            -tzip \
+          chmod -R 755 META-INF
+          chmod 755 tools/*
+          chmod 755 anykernel.sh
+
+          zip -r9 \
             ../release/Redmi9-KSU-SUSFS-${BUILD_TIME}.zip \
-            ./*
+            * \
+            -x "*.git*" \
+            -x "*README*"
 
       - name: Upload Flashable ZIP
         uses: actions/upload-artifact@v4
