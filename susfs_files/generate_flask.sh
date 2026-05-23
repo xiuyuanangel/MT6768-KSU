@@ -408,7 +408,7 @@ echo "Generated security/selinux/av_permissions.h"
 if [ -f kernel/apk_sign.c ]; then
   if ! grep -q '#define EXPECTED_SIZE' kernel/apk_sign.c; then
     echo "Fixing apk_sign.c: adding missing macro definitions..."
-    sed -i '1i #ifndef EXPECTED_SIZE\n#define EXPECTED_SIZE 0\n#endif\n#ifndef EXPECTED_HASH\n#define EXPECTED_HASH {0}\n#endif' kernel/apk_sign.c
+    sed -i '1i #ifndef EXPECTED_SIZE\n#define EXPECTED_SIZE 0\n#endif\n#ifndef EXPECTED_HASH\n#define EXPECTED_HASH NULL\n#endif' kernel/apk_sign.c
   fi
 fi
 
