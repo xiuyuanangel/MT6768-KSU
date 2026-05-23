@@ -88,7 +88,8 @@ jobs:
         grep -q "susfs.o" fs/Makefile || \
         echo 'obj-y += susfs.o' >> fs/Makefile
 
-        grep -q "config KSU_SUSFS" fs/Kconfig || cat >> fs/Kconfig <<EOF\nconfig KSU_SUSFS\nbool "KernelSU SUSFS"\ndefault y\nEOF
+        grep -q "config KSU_SUSFS" fs/Kconfig || \
+        printf '%s\n' 'config KSU_SUSFS' '    bool "KernelSU SUSFS"' '    default y' >> fs/Kconfig
 
     - name: Android13 SUSFS Fix
       run: |
