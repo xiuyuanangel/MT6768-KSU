@@ -10,13 +10,12 @@ fi
 
 cd "$KERNEL_TREE" || exit 1
 
+# 创建必要的目录
 mkdir -p security/selinux/include
+mkdir -p security/selinux/ss
 
-# 1. Generate flask.h - Security class definitions
-if [ ! -f security/selinux/include/flask.h ]; then
-  echo "Generating flask.h..."
-  cat > security/selinux/include/flask.h << 'EOF'
-#ifndef _FLASK_H_
+# 1. Generate flask.h - Security class definitions (需要同时在两个位置)
+FLASK_CONTENT='#ifndef _FLASK_H_
 #define _FLASK_H_
 
 /* Auto-generated SELinux flask.h for KernelSU */
@@ -100,15 +99,14 @@ if [ ! -f security/selinux/include/flask.h ]; then
 #define SECCLASS_X_CLIENT_WINDOW2 77
 #define SECCLASS_MAX            78
 
-#endif /* _FLASK_H_ */
-EOF
-fi
+#endif /* _FLASK_H_ */'
 
-# 2. Generate av_permissions.h - Access vector permissions
-if [ ! -f security/selinux/include/av_permissions.h ]; then
-  echo "Generating av_permissions.h..."
-  cat > security/selinux/include/av_permissions.h << 'EOF'
-#ifndef _AV_PERMISSIONS_H_
+echo "$FLASK_CONTENT" > security/selinux/include/flask.h
+echo "$FLASK_CONTENT" > security/selinux/ss/flask.h
+echo "Generated flask.h"
+
+# 2. Generate av_permissions.h - Access vector permissions (同时放两个位置)
+AV_PERM_CONTENT='#ifndef _AV_PERMISSIONS_H_
 #define _AV_PERMISSIONS_H_
 
 /* Auto-generated SELinux av_permissions.h for KernelSU */
@@ -151,8 +149,6 @@ if [ ! -f security/selinux/include/av_permissions.h ]; then
 #define FILE__TRANSITION          0x00080000UL
 #define FILE__ENTRYPOINT          0x00100000UL
 #define FILE__AUDIT_CHANGE_OWNER 0x00200000UL
-#define FILE__AUDIT_CHANGE_OWNER 0x00200000UL
-#define FILE__AUDIT_CHANGE_OWNER 0x00200000UL
 
 /* Process permissions */
 #define PROCESS__FORK              0x00000001UL
@@ -160,7 +156,6 @@ if [ ! -f security/selinux/include/av_permissions.h ]; then
 #define PROCESS__SIGKILL          0x00000004UL
 #define PROCESS__SIGSTOP          0x00000008UL
 #define PROCESS__SIGNICE          0x00000010UL
-#define PROCESS__SIGCHLD          0x00000020UL
 #define PROCESS__PTRACE           0x00000040UL
 #define PROCESS__GETINFO          0x00000080UL
 #define PROCESS__SETINFO          0x00000100UL
@@ -174,15 +169,14 @@ if [ ! -f security/selinux/include/av_permissions.h ]; then
 #define PROCESS__SIGINH         0x00010000UL
 #define PROCESS__DYNTRANSITION 0x00020000UL
 
-#endif /* _AV_PERMISSIONS_H_ */
-EOF
-fi
+#endif /* _AV_PERMISSIONS_H_ */'
 
-# 3. Generate initial_sid.h - Initial SID definitions (needed by sidtab.h)
-if [ ! -f security/selinux/include/initial_sid.h ]; then
-  echo "Generating initial_sid.h..."
-  cat > security/selinux/include/initial_sid.h << 'EOF'
-#ifndef _INITIAL_SID_H_
+echo "$AV_PERM_CONTENT" > security/selinux/include/av_permissions.h
+echo "$AV_PERM_CONTENT" > security/selinux/ss/av_permissions.h
+echo "Generated av_permissions.h"
+
+# 3. Generate initial_sid.h - Initial SID definitions (关键！sidtab.h 需要)
+INITIAL_SID_CONTENT='#ifndef _INITIAL_SID_H_
 #define _INITIAL_SID_H_
 
 /* Auto-generated SELinux initial SID definitions for KernelSU */
@@ -200,30 +194,25 @@ if [ ! -f security/selinux/include/initial_sid.h ]; then
 #define SECINITSID_DEVNULL    12
 #define SECINITSID_NUM        13
 
-#endif /* _INITIAL_SID_H_ */
-EOF
-fi
+#endif /* _INITIAL_SID_H_ */'
 
-# Also create initial_sid_to_string.h (some kernels may need it)
-if [ ! -f security/selinux/include/initial_sid_to_string.h ]; then
-  echo "Generating initial_sid_to_string.h..."
-  cat > security/selinux/include/initial_sid_to_string.h << 'EOF'
-#ifndef _INITIAL_SID_TO_STRING_H_
-#define _INITIAL_SID_TO_STRING_H_
+echo "$INITIAL_SID_CONTENT" > security/selinux/include/initial_sid.h
+echo "$INITIAL_SID_CONTENT" > security/selinux/ss/initial_sid.h
+echo "Generated initial_sid.h (with SECINITSID_NUM)"
 
-/* Auto-generated */
-#include "initial_sid.h"
-
-#endif /* _INITIAL_SID_TO_STRING_H_ */
-EOF
-fi
-
-# 4. Generate other required headers
-for f in av_perm_to_string.h class_to_string.h common_perm_to_string.h; do
-  if [ ! -f "security/selinux/include/$f" ]; then
-    echo "Creating $f..."
-    echo "/* Auto-generated */" > "security/selinux/include/$f"
-  fi
+# 4. Generate other required headers in both locations
+for f in av_perm_to_string.h class_to_string.h common_perm_to_string.h initial_sid_to_string.h; do
+  echo "/* Auto-generated */" > "security/selinux/include/$f"
+  echo "/* Auto-generated */" > "security/selinux/ss/$f"
 done
+
+# 5. Fix apk_sign.c EXPECTED_SIZE and EXPECTED_HASH issue
+if [ -f kernel/apk_sign.c ]; then
+  # 检查是否缺少这些宏定义
+  if ! grep -q 'EXPECTED_SIZE' kernel/apk_sign.c; then
+    echo "Fixing apk_sign.c: adding missing macro definitions..."
+    sed -i '1i\#ifndef EXPECTED_SIZE\n#define EXPECTED_SIZE 0\n#endif\n#ifndef EXPECTED_HASH\n#define EXPECTED_HASH {0}\n#endif' kernel/apk_sign.c
+  fi
+fi
 
 echo "SELinux headers generated successfully"
