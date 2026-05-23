@@ -1,5 +1,5 @@
 #!/bin/bash
-# Generate flask.h for SELinux
+# Generate SELinux headers for KernelSU
 
 KERNEL_TREE=$1
 
@@ -10,12 +10,11 @@ fi
 
 cd "$KERNEL_TREE" || exit 1
 
-# flask.h 是 SELinux 自动生成的头文件
-# 如果不存在，则创建避免编译错误
+mkdir -p security/selinux/include
+
+# 1. Generate flask.h - Security class definitions
 if [ ! -f security/selinux/include/flask.h ]; then
-  echo "flask.h not found, creating file..."
-  mkdir -p security/selinux/include
-  
+  echo "Generating flask.h..."
   cat > security/selinux/include/flask.h << 'EOF'
 #ifndef _FLASK_H_
 #define _FLASK_H_
@@ -99,16 +98,116 @@ if [ ! -f security/selinux/include/flask.h ]; then
 #define SECCLASS_X_TRANSITION2  75
 #define SECCLASS_X_CONTEXT2     76
 #define SECCLASS_X_CLIENT_WINDOW2 77
-#define SECCLASS_MAX            77
+#define SECCLASS_MAX            78
 
 #endif /* _FLASK_H_ */
 EOF
 fi
 
-# 检查其他可能缺失的 SELinux 头文件
-for f in av_perm_to_string.h av_permissions.h class_to_string.h common_perm_to_string.h; do
+# 2. Generate av_permissions.h - Access vector permissions
+if [ ! -f security/selinux/include/av_permissions.h ]; then
+  echo "Generating av_permissions.h..."
+  cat > security/selinux/include/av_permissions.h << 'EOF'
+#ifndef _AV_PERMISSIONS_H_
+#define _AV_PERMISSIONS_H_
+
+/* Auto-generated SELinux av_permissions.h for KernelSU */
+
+/* Common permissions */
+#define COMMON__FILESYSTEM 0x00000001UL
+
+/* Filesystem permissions */
+#define FILESYSTEM__MOUNT            0x00000001UL
+#define FILESYSTEM__REMOUNT         0x00000002UL
+#define FILESYSTEM__UNMOUNT         0x00000004UL
+#define FILESYSTEM__GETATTR         0x00000008UL
+#define FILESYSTEM__RELABELFROM     0x00000010UL
+#define FILESYSTEM__RELABELTO       0x00000020UL
+#define FILESYSTEM__ASSOCIATE      0x00000040UL
+#define FILESYSTEM__QUOTAMOD       0x00000080UL
+#define FILESYSTEM__QUOTAGET       0x00000100UL
+#define FILESYSTEM__LABELFROM       0x00000200UL
+
+/* File permissions */
+#define FILE__READ                0x00000001UL
+#define FILE__WRITE               0x00000002UL
+#define FILE__CREATE              0x00000004UL
+#define FILE__GETATTR             0x00000008UL
+#define FILE__SETATTR             0x00000010UL
+#define FILE__LOCK                0x00000020UL
+#define FILE__RELABELFROM         0x00000040UL
+#define FILE__RELABELTO           0x00000080UL
+#define FILE__APPEND              0x00000100UL
+#define FILE__UNLINK              0x00000200UL
+#define FILE__LINK                0x00000400UL
+#define FILE__RENAME              0x00000800UL
+#define FILE__EXECUTE             0x00001000UL
+#define FILE__SWAPON              0x00002000UL
+#define FILE__QUOTAON             0x00004000UL
+#define FILE__MOUNTON             0x00008000UL
+#define FILE__AUDIT_ACCESS       0x00010000UL
+#define FILE__AUDIT_MODIFY       0x00020000UL
+#define FILE__EXECUTE_NO_TRANS   0x00040000UL
+#define FILE__TRANSITION          0x00080000UL
+#define FILE__ENTRYPOINT          0x00100000UL
+#define FILE__AUDIT_CHANGE_OWNER 0x00200000UL
+#define FILE__AUDIT_CHANGE_OWNER 0x00200000UL
+#define FILE__AUDIT_CHANGE_OWNER 0x00200000UL
+
+/* Process permissions */
+#define PROCESS__FORK              0x00000001UL
+#define PROCESS__SIGCHLD          0x00000002UL
+#define PROCESS__SIGKILL          0x00000004UL
+#define PROCESS__SIGSTOP          0x00000008UL
+#define PROCESS__SIGNICE          0x00000010UL
+#define PROCESS__SIGCHLD          0x00000020UL
+#define PROCESS__PTRACE           0x00000040UL
+#define PROCESS__GETINFO          0x00000080UL
+#define PROCESS__SETINFO          0x00000100UL
+#define PROCESS__GETATTR         0x00000200UL
+#define PROCESS__SETATTR         0x00000400UL
+#define PROCESS__CREATE          0x00000800UL
+#define PROCESS__EXECUTE        0x00001000UL
+#define PROCESS__TRANSITION     0x00002000UL
+#define PROCESS__DYTRANSITION   0x00004000UL
+#define PROCESS__NOATSECURITY   0x00008000UL
+#define PROCESS__SIGINH         0x00010000UL
+#define PROCESS__DYNTRANSITION 0x00020000UL
+
+#endif /* _AV_PERMISSIONS_H_ */
+EOF
+fi
+
+# 3. Generate initial_sid_to_string.h - Initial SID definitions
+if [ ! -f security/selinux/include/initial_sid_to_string.h ]; then
+  echo "Generating initial_sid_to_string.h..."
+  cat > security/selinux/include/initial_sid_to_string.h << 'EOF'
+#ifndef _INITIAL_SID_TO_STRING_H_
+#define _INITIAL_SID_TO_STRING_H_
+
+/* Auto-generated SELinux initial SID definitions for KernelSU */
+#define SECINITSID_KERNEL      1
+#define SECINITSID_SECURITY   2
+#define SECINITSID_UNLABELED  3
+#define SECINITSID_FS          4
+#define SECINITSID_FILE        5
+#define SECINITSID_FILE_LABELS 6
+#define SECINITSID_INIT        7
+#define SECINITSID_ANY_SOCKET 8
+#define SECINITSID_PORT        9
+#define SECINITSID_NETMSG     10
+#define SECINITSID_BDEV       11
+#define SECINITSID_DEVNULL    12
+#define SECINITSID_NUM        13
+
+#endif /* _INITIAL_SID_TO_STRING_H_ */
+EOF
+fi
+
+# 4. Generate other required headers
+for f in av_perm_to_string.h class_to_string.h common_perm_to_string.h; do
   if [ ! -f "security/selinux/include/$f" ]; then
-    echo "Creating empty $f..."
+    echo "Creating $f..."
     echo "/* Auto-generated */" > "security/selinux/include/$f"
   fi
 done
