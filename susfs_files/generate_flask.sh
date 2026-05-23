@@ -178,12 +178,12 @@ if [ ! -f security/selinux/include/av_permissions.h ]; then
 EOF
 fi
 
-# 3. Generate initial_sid_to_string.h - Initial SID definitions
-if [ ! -f security/selinux/include/initial_sid_to_string.h ]; then
-  echo "Generating initial_sid_to_string.h..."
-  cat > security/selinux/include/initial_sid_to_string.h << 'EOF'
-#ifndef _INITIAL_SID_TO_STRING_H_
-#define _INITIAL_SID_TO_STRING_H_
+# 3. Generate initial_sid.h - Initial SID definitions (needed by sidtab.h)
+if [ ! -f security/selinux/include/initial_sid.h ]; then
+  echo "Generating initial_sid.h..."
+  cat > security/selinux/include/initial_sid.h << 'EOF'
+#ifndef _INITIAL_SID_H_
+#define _INITIAL_SID_H_
 
 /* Auto-generated SELinux initial SID definitions for KernelSU */
 #define SECINITSID_KERNEL      1
@@ -199,6 +199,20 @@ if [ ! -f security/selinux/include/initial_sid_to_string.h ]; then
 #define SECINITSID_BDEV       11
 #define SECINITSID_DEVNULL    12
 #define SECINITSID_NUM        13
+
+#endif /* _INITIAL_SID_H_ */
+EOF
+fi
+
+# Also create initial_sid_to_string.h (some kernels may need it)
+if [ ! -f security/selinux/include/initial_sid_to_string.h ]; then
+  echo "Generating initial_sid_to_string.h..."
+  cat > security/selinux/include/initial_sid_to_string.h << 'EOF'
+#ifndef _INITIAL_SID_TO_STRING_H_
+#define _INITIAL_SID_TO_STRING_H_
+
+/* Auto-generated */
+#include "initial_sid.h"
 
 #endif /* _INITIAL_SID_TO_STRING_H_ */
 EOF
