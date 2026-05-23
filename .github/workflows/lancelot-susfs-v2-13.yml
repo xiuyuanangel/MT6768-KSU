@@ -105,8 +105,9 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/action_dir/kernel_tree
 
-        cp $GITHUB_WORKSPACE/susfs_files/kernel_patches/fs/susfs.c fs/
-        cp $GITHUB_WORKSPACE/susfs_files/kernel_patches/include/linux/susfs.h include/linux/
+        # 复制 SUSFS 源文件到正确位置
+        cp $GITHUB_WORKSPACE/susfs_files/susfs.c fs/
+        cp $GITHUB_WORKSPACE/susfs_files/susfs.h include/linux/
 
         grep -q 'susfs.o' fs/Makefile || \
           echo 'obj-$(CONFIG_KSU_SUSFS) += susfs.o' >> fs/Makefile
@@ -118,11 +119,12 @@ jobs:
           echo "    default y" >> fs/Kconfig
         }
 
+        # 应用补丁文件（使用正确的路径）
         patch -p1 -F 3 < \
-          $GITHUB_WORKSPACE/susfs_files/kernel_patches/10_enable_susfs_for_ksu.patch || true
+          $GITHUB_WORKSPACE/susfs_files/10_enable_susfs_for_ksu.patch || true
 
         patch -p1 -F 3 < \
-          $GITHUB_WORKSPACE/susfs_files/kernel_patches/50_add_susfs_in_kernel-4.14.patch || true
+          $GITHUB_WORKSPACE/susfs_files/50_add_susfs_in_kernel-4.14.patch || true
 
         # 修复 open.c reject（链式单行 sed 避免 YAML 多行解析问题）
         if [ -f "fs/open.c.rej" ]; then
