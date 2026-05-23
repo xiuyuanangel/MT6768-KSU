@@ -37,28 +37,21 @@ jobs:
         wget -P $GITHUB_WORKSPACE/ https://raw.githubusercontent.com/xiaoleGun/KernelSU_Action/main/patches/patches.sh
         bash $GITHUB_WORKSPACE/patches.sh
 
-    - name: Cloning SUSFS4KSU
-      run: |
-        cd $GITHUB_WORKSPACE/action_dir
-        git clone https://gitlab.com/simonpunk/susfs4ksu -b master susfs4ksu --depth=1
-
-    - name: Patching kernel tree for SUSFS support
+    - name: Patching kernel tree for SUSFS support (v3.x compatible)
       run: |
         cd $GITHUB_WORKSPACE/action_dir/kernel_tree
 
-        SUSFS_DIR=$GITHUB_WORKSPACE/action_dir/susfs4ksu/kernel_patches
-
         # Copy susfs source files into kernel tree
-        cp $SUSFS_DIR/fs/susfs.c fs/
-        cp $SUSFS_DIR/include/linux/susfs.h include/linux/
+        cp $GITHUB_WORKSPACE/susfs_files/susfs.c fs/
+        cp $GITHUB_WORKSPACE/susfs_files/susfs.h include/linux/
 
-        # Apply KernelSU integration patch (targets KernelSU/kernel/ - v3.x compatible)
-        patch -p1 -F 3 < $SUSFS_DIR/KernelSU/10_enable_susfs_for_ksu.patch
+        # Apply kernel VFS hooks patch (Linux 4.14 - works independently of KSU version)
+        patch -p1 -F 3 < $GITHUB_WORKSPACE/susfs_files/50_add_susfs_in_kernel-4.14.patch
 
-        # Apply kernel VFS hooks patch (Linux 4.14)
-        patch -p1 -F 3 < $SUSFS_DIR/50_add_susfs_in_kernel-4.14.patch
+        # Run manual v3.x integration script (replaces old 10_enable_susfs_for_ksu.patch)
+        bash $GITHUB_WORKSPACE/susfs_files/patch_ksu_v3x_for_susfs.sh
 
-        # Add SUSFS and required kernel configs to defconfig
+        # Add SUSFS configs to defconfig
         echo "CONFIG_KSU_SUSFS=y" >> arch/arm64/configs/lancelot_defconfig
         echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> arch/arm64/configs/lancelot_defconfig
         echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> arch/arm64/configs/lancelot_defconfig
