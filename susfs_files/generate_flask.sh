@@ -1,5 +1,5 @@
 #!/bin/bash
-# Generate SELinux headers for KernelSU
+# Generate SELinux headers for KernelSU (complete format for genheaders)
 
 KERNEL_TREE=$1
 
@@ -14,11 +14,195 @@ cd "$KERNEL_TREE" || exit 1
 mkdir -p security/selinux/include
 mkdir -p security/selinux/ss
 
-# 1. Generate flask.h - Security class definitions (需要同时在两个位置)
-FLASK_CONTENT='#ifndef _FLASK_H_
+# ============================================================
+# initial_sid_to_string.h - 必须包含 initial_sid_to_string 数组!
+# genheaders 工具依赖此数组
+# ============================================================
+cat > security/selinux/initial_sid_to_string.h << 'INITIAL_SID_EOF'
+static const char * const initial_sid_to_string[] = {
+	"kernel",
+	"security",
+	"unlabeled",
+	"fs",
+	"file",
+	"file_labels",
+	"init",
+	"any_socket",
+	"port",
+	"netmsg",
+	"bdev",
+	"devnull",
+	NULL,
+};
+INITIAL_SID_EOF
+echo "Generated security/selinux/initial_sid_to_string.h"
+
+# ============================================================
+# class_to_string.h - 安全类名称数组
+# ============================================================
+cat > security/selinux/class_to_string.h << 'CLASS_EOF'
+static const char * const class_to_string[] = {
+	"security",
+	"process",
+	"system",
+	"capability",
+	"filesystem",
+	"file",
+	"dir",
+	"fd",
+	"lnk_file",
+	"chr_file",
+	"blk_file",
+	"sock_file",
+	"fifo_file",
+	"socket",
+	"tcp_socket",
+	"udp_socket",
+	"rawip_socket",
+	"node",
+	"netif",
+	"netnode",
+	"netport",
+	"database",
+	"db_database",
+	"db_table",
+	"db_procedure",
+	"db_column",
+	"db_tuple",
+	"db_blob",
+	"process_signal",
+	"process_ns",
+	"drawable",
+	"window",
+	"x_colormap",
+	"x_drawable",
+	"x_server",
+	"x_cursor",
+	"x_client",
+	"x_device",
+	"x_font",
+	"x_gc",
+	"x_selection",
+	"x_event",
+	"x_synthetic",
+	"x_window",
+	"x_property",
+	"x_resource",
+	"x_client_window",
+	"association",
+	"netlink_socket",
+	"packet_socket",
+	"key_socket",
+	"dccp_socket",
+	"tun_socket",
+	"ipsec_sa",
+	"ipsec_policy",
+	"association2",
+	"ndisc_socket",
+	"key",
+	"x_context",
+	"x_transition",
+	"x_selection2",
+	"drawable2",
+	"x_server2",
+	"x_client2",
+	"x_window2",
+	"x_property2",
+	"x_resource2",
+	"x_event2",
+	"x_synthetic2",
+	"x_cursor2",
+	"x_colormap2",
+	"x_device2",
+	"x_font2",
+	"x_gc2",
+	"x_selection3",
+	"x_transition2",
+	"x_context2",
+	"x_client_window2",
+	NULL,
+};
+CLASS_EOF
+echo "Generated security/selinux/class_to_string.h"
+
+# ============================================================
+# av_perm_to_string.h - 访问向量权限字符串表
+# ============================================================
+cat > security/selinux/av_perm_to_string.h << 'AV_PERM_EOF'
+struct av_perm_to_string {
+	u16 tclass;
+	u32 value;
+	const char *name;
+};
+
+static const struct av_perm_to_string av_perm_to_string[] = {
+	{ SECCLASS_FILESYSTEM, FILESYSTEM__MOUNT, "mount" },
+	{ SECCLASS_FILESYSTEM, FILESYSTEM__REMOUNT, "remount" },
+	{ SECCLASS_FILESYSTEM, FILESYSTEM__UNMOUNT, "unmount" },
+	{ SECCLASS_FILESYSTEM, FILESYSTEM__GETATTR, "getattr" },
+	{ SECCLASS_FILESYSTEM, FILESYSTEM__RELABELFROM, "relabelfrom" },
+	{ SECCLASS_FILESYSTEM, FILESYSTEM__RELABELTO, "relabelto" },
+	{ SECCLASS_FILESYSTEM, FILESYSTEM__ASSOCIATE, "associate" },
+	{ SECCLASS_FILESYSTEM, FILESYSTEM__QUOTAMOD, "quotamod" },
+	{ SECCLASS_FILESYSTEM, FILESYSTEM__QUOTAGET, "quotaget" },
+	{ SECCLASS_FILE, FILE__READ, "read" },
+	{ SECCLASS_FILE, FILE__WRITE, "write" },
+	{ SECCLASS_FILE, FILE__CREATE, "create" },
+	{ SECCLASS_FILE, FILE__GETATTR, "getattr" },
+	{ SECCLASS_FILE, FILE__SETATTR, "setattr" },
+	{ SECCLASS_FILE, FILE__LOCK, "lock" },
+	{ SECCLASS_FILE, FILE__RELABELFROM, "relabelfrom" },
+	{ SECCLASS_FILE, FILE__RELabelTO, "relabelto" },
+	{ SECCLASS_FILE, FILE__APPEND, "append" },
+	{ SECCLASS_FILE, FILE__UNLINK, "unlink" },
+	{ SECCLASS_FILE, FILE__LINK, "link" },
+	{ SECCLASS_FILE, FILE__RENAME, "rename" },
+	{ SECCLASS_FILE, FILE__EXECUTE, "execute" },
+	{ SECCLASS_FILE, FILE__SWAPON, "swapon" },
+	{ SECCLASS_FILE, FILE__QUOTAON, "quotaon" },
+	{ SECCLASS_FILE, FILE__MOUNTON, "mounton" },
+	{ SECCLASS_PROCESS, PROCESS__FORK, "fork" },
+	{ SECCLASS_PROCESS, PROCESS__TRANSITION, "transition" },
+	{ SECCLASS_PROCESS, PROCESS__SIGCHLD, "sigchld" },
+	{ SECCLASS_PROCESS, PROCESS__SIGKILL, "sigkill" },
+	{ SECCLASS_PROCESS, PROCESS__SIGSTOP, "sigstop" },
+	{ SECCLASS_PROCESS, PROCESS__SIGNICE, "signull" },
+	{ SECCLASS_PROCESS, PROCESS__PTRACE, "ptrace" },
+	{ SECCLASS_PROCESS, process__GETSCHED, "getsched" },
+	{ SECCLASS_PROCESS, PROCESS__SETSCHED, "setsched" },
+	{ SECCLASS_PROCESS, PROCESS__GETSESSION, "getsession" },
+	{ SECCLASS_PROCESS, PROCESS__GETPGID, "getpgid" },
+	{ SECCLASS_PROCESS, PROCESS__SETPGID, "setpgid" },
+	{ SECCLASS_PROCESS, PROCESS__GETCAP, "getcap" },
+	{ SECCLASS_PROCESS, PROCESS__SETCAP, "setcap" },
+	{ NULL, 0, NULL }
+};
+AV_PERM_EOF
+echo "Generated security/selinux/av_perm_to_string.h"
+
+# ============================================================
+# common_perm_to_string.h - 通用权限字符串
+# ============================================================
+cat > security/selinux/common_perm_to_string.h << 'COMMON_PERM_EOF'
+struct common_perm_to_string {
+	u16 tclass;
+	u32 value;
+	const char *name;
+};
+
+static const struct common_perm_to_string common_perm_to_string[] = {
+	{ NULL, 0, NULL }
+};
+COMMON_PERM_EOF
+echo "Generated security/selinux/common_perm_to_string.h"
+
+# ============================================================
+# flask.h - Security class 定义 (宏)
+# ============================================================
+cat > security/selinux/flask.h << 'FLASK_EOF'
+#ifndef _FLASK_H_
 #define _FLASK_H_
 
-/* Auto-generated SELinux flask.h for KernelSU */
 #define SECCLASS_SECURITY           0
 #define SECCLASS_PROCESS            1
 #define SECCLASS_SYSTEM            2
@@ -99,17 +283,41 @@ FLASK_CONTENT='#ifndef _FLASK_H_
 #define SECCLASS_X_CLIENT_WINDOW2 77
 #define SECCLASS_MAX            78
 
-#endif /* _FLASK_H_ */'
+#endif /* _FLASK_H_ */
+FLASK_EOF
+echo "Generated security/selinux/flask.h"
 
-echo "$FLASK_CONTENT" > security/selinux/include/flask.h
-echo "$FLASK_CONTENT" > security/selinux/ss/flask.h
-echo "Generated flask.h"
+# ============================================================
+# initial_sid.h - Initial SID 宏定义
+# ============================================================
+cat > security/selinux/initial_sid.h << 'INITIAL_SID_MACROS_EOF'
+#ifndef _INITIAL_SID_H_
+#define _INITIAL_SID_H_
 
-# 2. Generate av_permissions.h - Access vector permissions (同时放两个位置)
-AV_PERM_CONTENT='#ifndef _AV_PERMISSIONS_H_
+#define SECINITSID_KERNEL      1
+#define SECINITSID_SECURITY   2
+#define SECINITSID_UNLABELED  3
+#define SECINITSID_FS          4
+#define SECINITSID_FILE        5
+#define SECINITSID_FILE_LABELS 6
+#define SECINITSID_INIT        7
+#define SECINITSID_ANY_SOCKET 8
+#define SECINITSID_PORT        9
+#define SECINITSID_NETMSG     10
+#define SECINITSID_BDEV       11
+#define SECINITSID_DEVNULL    12
+#define SECINITSID_NUM        13
+
+#endif /* _INITIAL_SID_H_ */
+INITIAL_SID_MACROS_EOF
+echo "Generated security/selinux/initial_sid.h (with SECINITSID_NUM)"
+
+# ============================================================
+# av_permissions.h - 权限值宏定义
+# ============================================================
+cat > security/selinux/av_permissions.h << 'AV_PERMISSIONS_EOF'
+#ifndef _AV_PERMISSIONS_H_
 #define _AV_PERMISSIONS_H_
-
-/* Auto-generated SELinux av_permissions.h for KernelSU */
 
 /* Common permissions */
 #define COMMON__FILESYSTEM 0x00000001UL
@@ -152,10 +360,11 @@ AV_PERM_CONTENT='#ifndef _AV_PERMISSIONS_H_
 
 /* Process permissions */
 #define PROCESS__FORK              0x00000001UL
-#define PROCESS__SIGCHLD          0x00000002UL
-#define PROCESS__SIGKILL          0x00000004UL
-#define PROCESS__SIGSTOP          0x00000008UL
-#define PROCESS__SIGNICE          0x00000010UL
+#define PROCESS__TRANSITION       0x00000002UL
+#define PROCESS__SIGCHLD          0x00000004UL
+#define PROCESS__SIGKILL          0x00000008UL
+#define PROCESS__SIGSTOP          0x00000010UL
+#define PROCESS__SIGNICE          0x00000020UL
 #define PROCESS__PTRACE           0x00000040UL
 #define PROCESS__GETINFO          0x00000080UL
 #define PROCESS__SETINFO          0x00000100UL
@@ -163,56 +372,23 @@ AV_PERM_CONTENT='#ifndef _AV_PERMISSIONS_H_
 #define PROCESS__SETATTR         0x00000400UL
 #define PROCESS__CREATE          0x00000800UL
 #define PROCESS__EXECUTE        0x00001000UL
-#define PROCESS__TRANSITION     0x00002000UL
-#define PROCESS__DYTRANSITION   0x00004000UL
-#define PROCESS__NOATSECURITY   0x00008000UL
+#define PROCESS__DYTRANSITION   0x00002000UL
+#define PROCESS__NOATSECURITY   0x00004000UL
 #define PROCESS__SIGINH         0x00010000UL
 #define PROCESS__DYNTRANSITION 0x00020000UL
 
-#endif /* _AV_PERMISSIONS_H_ */'
+#endif /* _AV_PERMISSIONS_H_ */
+AV_PERMISSIONS_EOF
+echo "Generated security/selinux/av_permissions.h"
 
-echo "$AV_PERM_CONTENT" > security/selinux/include/av_permissions.h
-echo "$AV_PERM_CONTENT" > security/selinux/ss/av_permissions.h
-echo "Generated av_permissions.h"
-
-# 3. Generate initial_sid.h - Initial SID definitions (关键！sidtab.h 需要)
-INITIAL_SID_CONTENT='#ifndef _INITIAL_SID_H_
-#define _INITIAL_SID_H_
-
-/* Auto-generated SELinux initial SID definitions for KernelSU */
-#define SECINITSID_KERNEL      1
-#define SECINITSID_SECURITY   2
-#define SECINITSID_UNLABELED  3
-#define SECINITSID_FS          4
-#define SECINITSID_FILE        5
-#define SECINITSID_FILE_LABELS 6
-#define SECINITSID_INIT        7
-#define SECINITSID_ANY_SOCKET 8
-#define SECINITSID_PORT        9
-#define SECINITSID_NETMSG     10
-#define SECINITSID_BDEV       11
-#define SECINITSID_DEVNULL    12
-#define SECINITSID_NUM        13
-
-#endif /* _INITIAL_SID_H_ */'
-
-echo "$INITIAL_SID_CONTENT" > security/selinux/include/initial_sid.h
-echo "$INITIAL_SID_CONTENT" > security/selinux/ss/initial_sid.h
-echo "Generated initial_sid.h (with SECINITSID_NUM)"
-
-# 4. Generate other required headers in both locations
-for f in av_perm_to_string.h class_to_string.h common_perm_to_string.h initial_sid_to_string.h; do
-  echo "/* Auto-generated */" > "security/selinux/include/$f"
-  echo "/* Auto-generated */" > "security/selinux/ss/$f"
-done
-
-# 5. Fix apk_sign.c EXPECTED_SIZE and EXPECTED_HASH issue
+# ============================================================
+# Fix apk_sign.c EXPECTED_SIZE and EXPECTED_HASH issue
+# ============================================================
 if [ -f kernel/apk_sign.c ]; then
-  # 检查是否缺少这些宏定义
-  if ! grep -q 'EXPECTED_SIZE' kernel/apk_sign.c; then
+  if ! grep -q '#define EXPECTED_SIZE' kernel/apk_sign.c; then
     echo "Fixing apk_sign.c: adding missing macro definitions..."
-    sed -i '1i\#ifndef EXPECTED_SIZE\n#define EXPECTED_SIZE 0\n#endif\n#ifndef EXPECTED_HASH\n#define EXPECTED_HASH {0}\n#endif' kernel/apk_sign.c
+    sed -i '1i #ifndef EXPECTED_SIZE\n#define EXPECTED_SIZE 0\n#endif\n#ifndef EXPECTED_HASH\n#define EXPECTED_HASH {0}\n#endif' kernel/apk_sign.c
   fi
 fi
 
-echo "SELinux headers generated successfully"
+echo "SELinux headers generated successfully!"
