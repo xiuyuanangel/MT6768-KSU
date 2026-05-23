@@ -48,6 +48,7 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE
 
+        rm -rf susfs_files
         git clone https://github.com/sidex15/susfs4ksu.git susfs_files --depth=1
 
     - name: Installing KernelSU v1.0.5 (non-GKI compatible)
