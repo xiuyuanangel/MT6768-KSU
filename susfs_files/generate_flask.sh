@@ -312,6 +312,12 @@ cat > security/selinux/initial_sid.h << 'INITIAL_SID_MACROS_EOF'
 INITIAL_SID_MACROS_EOF
 echo "Generated security/selinux/initial_sid.h (with SECINITSID_NUM)"
 
+# 关键：复制到 ss/ 目录！sidtab.h 在 ss/ 下，include 路径优先搜索此目录
+cp security/selinux/initial_sid.h security/selinux/ss/initial_sid.h
+cp security/selinux/flask.h security/selinux/ss/flask.h
+cp security/selinux/av_permissions.h security/selinux/ss/av_permissions.h
+echo "Copied headers to security/selinux/ss/"
+
 # ============================================================
 # av_permissions.h - 权限值宏定义
 # ============================================================
