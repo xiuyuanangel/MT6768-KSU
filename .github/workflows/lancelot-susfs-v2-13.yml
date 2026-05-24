@@ -87,6 +87,7 @@ jobs:
           echo "ccflags-y += -Wno-int-conversion" >> kernel/Makefile
           echo "ccflags-y += -Wno-gcc-compat" >> kernel/Makefile
           echo "ccflags-y += -Wno-declaration-after-statement" >> kernel/Makefile
+          echo "ccflags-y += -Wno-unused-variable" >> kernel/Makefile
           echo "" >> kernel/Makefile
           echo "obj-y += core_hook.o ksu.o allowlist.o apk_sign.o throne_tracker.o sucompat.o embed_ksud.o kernel_compat.o" >> kernel/Makefile
         }
