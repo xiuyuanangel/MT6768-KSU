@@ -228,6 +228,15 @@ jobs:
         touch $OUTDIR/security/selinux/ss/av_permissions.h
         touch $OUTDIR/security/selinux/ss/initial_sid.h
         
+        # 禁用 genheaders 重新生成：用 no-op 脚本替换，防止覆盖完整 flask.h
+        cd $GITHUB_WORKSPACE/action_dir/kernel_tree
+        GENHEADERS=out/scripts/selinux/genheaders/genheaders
+        if [ -f "$GENHEADERS" ]; then
+          mv "$GENHEADERS" "${GENHEADERS}.bak"
+          printf '#!/bin/sh\ntouch "$@"\n' > "$GENHEADERS"
+          chmod +x "$GENHEADERS"
+        fi
+        
         echo "SELinux headers synced to build output directory"
 
     - name: Building kernel (phase 2 - full build)

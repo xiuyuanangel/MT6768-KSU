@@ -172,6 +172,8 @@ static const char * const class_to_string[] = {
 	"vsock_socket",
 	"cap_userns",
 	"cap2_userns",
+	"binder",
+	"process2",
 	NULL,
 };
 CLASS_EOF
@@ -385,7 +387,9 @@ cat > security/selinux/flask.h << 'FLASK_EOF'
 #define SECCLASS_VSOCK_SOCKET       127
 #define SECCLASS_CAP_USERNS         128
 #define SECCLASS_CAP2_USERNS        129
-#define SECCLASS_MAX                130
+#define SECCLASS_BINDER            130
+#define SECCLASS_PROCESS2          131
+#define SECCLASS_MAX                132
 
 /* Initial SID definitions (also needed by sidtab.h) */
 #define SECINITSID_KERNEL      1
@@ -482,6 +486,8 @@ cat > security/selinux/av_permissions.h << 'AV_PERMISSIONS_EOF'
 #define FILE__TRANSITION          0x00080000UL
 #define FILE__ENTRYPOINT          0x00100000UL
 #define FILE__AUDIT_CHANGE_OWNER 0x00200000UL
+#define FILE__IOCTL              0x00400000UL
+#define FILE__OPEN               0x00800000UL
 
 /* Process permissions */
 #define PROCESS__FORK              0x00000001UL
@@ -502,6 +508,8 @@ cat > security/selinux/av_permissions.h << 'AV_PERMISSIONS_EOF'
 #define PROCESS__SIGINH         0x00010000UL
 #define PROCESS__DYNTRANSITION 0x00020000UL
 #define PROCESS__SIGNAL        0x00040000UL
+#define PROCESS__GETCAP        0x00080000UL
+#define PROCESS__SETCAP        0x00100000UL
 
 /* File descriptor permissions */
 #define FD__USE                 0x00000001UL
@@ -512,6 +520,23 @@ cat > security/selinux/av_permissions.h << 'AV_PERMISSIONS_EOF'
 #define DIR__SEARCH             0x00000004UL
 #define DIR__RMDIR              0x00000008UL
 #define DIR__REPARENT           0x00000010UL
+#define DIR__WRITE              0x00000020UL
+#define DIR__READ               0x00000040UL
+
+/* Binder permissions */
+#define BINDER__SET_CONTEXT_MGR  0x00000001UL
+#define BINDER__IMPERSONATE      0x00000002UL
+#define BINDER__CALL             0x00000004UL
+#define BINDER__TRANSFER         0x00000008UL
+
+/* System permissions */
+#define SYSTEM__SYSLOG_READ      0x00000001UL
+#define SYSTEM__SYSLOG_CONSOLE   0x00000002UL
+#define SYSTEM__SYSLOG_MOD       0x00000004UL
+
+/* Process2 permissions */
+#define PROCESS2__NNP_TRANSITION    0x00000001UL
+#define PROCESS2__NOSUID_TRANSITION 0x00000002UL
 
 #endif /* _AV_PERMISSIONS_H_ */
 AV_PERMISSIONS_EOF
