@@ -120,6 +120,29 @@ static const char * const class_to_string[] = {
 	"x_transition2",
 	"x_context2",
 	"x_client_window2",
+	"unix_stream_socket",
+	"unix_dgram_socket",
+	"sctp_socket",
+	"icmp_socket",
+	"netlink_route_socket",
+	"netlink_tcpdiag_socket",
+	"netlink_nflog_socket",
+	"netlink_xfrm_socket",
+	"netlink_selinux_socket",
+	"netlink_iscsi_socket",
+	"netlink_audit_socket",
+	"netlink_fib_lookup_socket",
+	"netlink_connector_socket",
+	"netlink_netfilter_socket",
+	"netlink_dnrt_socket",
+	"netlink_kobject_uevent_socket",
+	"netlink_generic_socket",
+	"netlink_scsitransport_socket",
+	"netlink_rdma_socket",
+	"capability2",
+	"peer",
+	"appletalk_socket",
+	"netlink_crypto_socket",
 	NULL,
 };
 CLASS_EOF
@@ -281,7 +304,30 @@ cat > security/selinux/flask.h << 'FLASK_EOF'
 #define SECCLASS_X_TRANSITION2  75
 #define SECCLASS_X_CONTEXT2     76
 #define SECCLASS_X_CLIENT_WINDOW2 77
-#define SECCLASS_MAX            78
+#define SECCLASS_UNIX_STREAM_SOCKET 78
+#define SECCLASS_UNIX_DGRAM_SOCKET 79
+#define SECCLASS_SCTP_SOCKET        80
+#define SECCLASS_ICMP_SOCKET        81
+#define SECCLASS_NETLINK_ROUTE_SOCKET 82
+#define SECCLASS_NETLINK_TCPDIAG_SOCKET 83
+#define SECCLASS_NETLINK_NFLOG_SOCKET 84
+#define SECCLASS_NETLINK_XFRM_SOCKET 85
+#define SECCLASS_NETLINK_SELINUX_SOCKET 86
+#define SECCLASS_NETLINK_ISCSI_SOCKET 87
+#define SECCLASS_NETLINK_AUDIT_SOCKET 88
+#define SECCLASS_NETLINK_FIB_LOOKUP_SOCKET 89
+#define SECCLASS_NETLINK_CONNECTOR_SOCKET 90
+#define SECCLASS_NETLINK_NETFILTER_SOCKET 91
+#define SECCLASS_NETLINK_DNRT_SOCKET 92
+#define SECCLASS_NETLINK_KOBJECT_UEVENT_SOCKET 93
+#define SECCLASS_NETLINK_GENERIC_SOCKET 94
+#define SECCLASS_NETLINK_SCSITRANSPORT_SOCKET 95
+#define SECCLASS_NETLINK_RDMA_SOCKET 96
+#define SECCLASS_CAPABILITY2      97
+#define SECCLASS_PEER             98
+#define SECCLASS_APPLETALK_SOCKET 99
+#define SECCLASS_NETLINK_CRYPTO_SOCKET 100
+#define SECCLASS_MAX             101
 
 /* Initial SID definitions (also needed by sidtab.h) */
 #define SECINITSID_KERNEL      1
