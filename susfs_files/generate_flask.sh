@@ -143,6 +143,32 @@ static const char * const class_to_string[] = {
 	"peer",
 	"appletalk_socket",
 	"netlink_crypto_socket",
+	"ax25_socket",
+	"ipx_socket",
+	"netrom_socket",
+	"atmpvc_socket",
+	"x25_socket",
+	"rose_socket",
+	"decnet_socket",
+	"atmsvc_socket",
+	"rds_socket",
+	"irda_socket",
+	"pppox_socket",
+	"llc_socket",
+	"can_socket",
+	"tipc_socket",
+	"bluetooth_socket",
+	"iucv_socket",
+	"rxrpc_socket",
+	"isdn_socket",
+	"phonet_socket",
+	"ieee802154_socket",
+	"caif_socket",
+	"alg_socket",
+	"nfc_socket",
+	"kcm_socket",
+	"qipcrtr_socket",
+	"smc_socket",
 	NULL,
 };
 CLASS_EOF
@@ -327,7 +353,33 @@ cat > security/selinux/flask.h << 'FLASK_EOF'
 #define SECCLASS_PEER             98
 #define SECCLASS_APPLETALK_SOCKET 99
 #define SECCLASS_NETLINK_CRYPTO_SOCKET 100
-#define SECCLASS_MAX             101
+#define SECCLASS_AX25_SOCKET        101
+#define SECCLASS_IPX_SOCKET         102
+#define SECCLASS_NETROM_SOCKET      103
+#define SECCLASS_ATMPVC_SOCKET      104
+#define SECCLASS_X25_SOCKET         105
+#define SECCLASS_ROSE_SOCKET        106
+#define SECCLASS_DECNET_SOCKET      107
+#define SECCLASS_ATMSVC_SOCKET      108
+#define SECCLASS_RDS_SOCKET         109
+#define SECCLASS_IRDA_SOCKET        110
+#define SECCLASS_PPPOX_SOCKET       111
+#define SECCLASS_LLC_SOCKET         112
+#define SECCLASS_CAN_SOCKET         113
+#define SECCLASS_TIPC_SOCKET        114
+#define SECCLASS_BLUETOOTH_SOCKET   115
+#define SECCLASS_IUCV_SOCKET        116
+#define SECCLASS_RXRPC_SOCKET       117
+#define SECCLASS_ISDN_SOCKET        118
+#define SECCLASS_PHONET_SOCKET      119
+#define SECCLASS_IEEE802154_SOCKET  120
+#define SECCLASS_CAIF_SOCKET        121
+#define SECCLASS_ALG_SOCKET         122
+#define SECCLASS_NFC_SOCKET         123
+#define SECCLASS_KCM_SOCKET         124
+#define SECCLASS_QIPCRTR_SOCKET     125
+#define SECCLASS_SMC_SOCKET         126
+#define SECCLASS_MAX                127
 
 /* Initial SID definitions (also needed by sidtab.h) */
 #define SECINITSID_KERNEL      1

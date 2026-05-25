@@ -178,7 +178,7 @@ jobs:
         chmod +x $GITHUB_WORKSPACE/susfs_files/generate_flask.sh
         $GITHUB_WORKSPACE/susfs_files/generate_flask.sh $GITHUB_WORKSPACE/action_dir/kernel_tree
 
-    - name: Building kernel
+    - name: Building kernel (phase 1 - tools + genheaders)
       run: |
         cd $GITHUB_WORKSPACE/action_dir/kernel_tree
 
@@ -194,6 +194,40 @@ jobs:
           CROSS_COMPILE=aarch64-linux-gnu- \
           CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
           lancelot_defconfig
+
+        make -j$(nproc --all) \
+          CC=clang \
+          O=out \
+          ARCH=arm64 \
+          LD=ld.lld \
+          CROSS_COMPILE=aarch64-linux-gnu- \
+          CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
+          scripts
+
+        # 补充 genheaders 生成后缺失的 SECCLASS 定义
+        chmod +x $GITHUB_WORKSPACE/susfs_files/generate_flask.sh
+        $GITHUB_WORKSPACE/susfs_files/generate_flask.sh $GITHUB_WORKSPACE/action_dir/kernel_tree
+
+        # 也将 flask.h 复制到 build 目录，覆盖 genheaders 的输出
+        OUTDIR=$GITHUB_WORKSPACE/action_dir/kernel_tree/out
+        mkdir -p $OUTDIR/security/selinux/
+        cp -f $GITHUB_WORKSPACE/action_dir/kernel_tree/security/selinux/flask.h $OUTDIR/security/selinux/flask.h
+        cp -f $GITHUB_WORKSPACE/action_dir/kernel_tree/security/selinux/av_permissions.h $OUTDIR/security/selinux/av_permissions.h
+        cp -f $GITHUB_WORKSPACE/action_dir/kernel_tree/security/selinux/initial_sid.h $OUTDIR/security/selinux/initial_sid.h
+        mkdir -p $OUTDIR/security/selinux/ss
+        cp -f $GITHUB_WORKSPACE/action_dir/kernel_tree/security/selinux/flask.h $OUTDIR/security/selinux/ss/flask.h
+        cp -f $GITHUB_WORKSPACE/action_dir/kernel_tree/security/selinux/av_permissions.h $OUTDIR/security/selinux/ss/av_permissions.h
+        cp -f $GITHUB_WORKSPACE/action_dir/kernel_tree/security/selinux/initial_sid.h $OUTDIR/security/selinux/ss/initial_sid.h
+        
+        echo "SELinux headers synced to build output directory"
+
+    - name: Building kernel (phase 2 - full build)
+      run: |
+        cd $GITHUB_WORKSPACE/action_dir/kernel_tree
+
+        export PATH=$GITHUB_WORKSPACE/action_dir/proton-clang/bin:$PATH
+        export KBUILD_BUILD_HOST=github
+        export KBUILD_BUILD_USER=BadSoul_SFC
 
         make -j$(nproc --all) \
           CC=clang \
