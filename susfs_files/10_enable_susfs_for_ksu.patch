@@ -99,37 +99,37 @@ index 66929756..d25f36c7 100644
  ccflags-y += -Wno-declaration-after-statement -Wno-unused-function
  
 +ifeq ($(shell test -e $(srctree)/fs/susfs.c; echo $$?),0)
-+ifdef KSU_SUSFS
++ifeq ($(CONFIG_KSU_SUSFS),y)
 +ccflags-y += -DKSU_SUSFS
 +endif
-+ifdef KSU_SUSFS_SUS_PATH
++ifeq ($(CONFIG_KSU_SUSFS_SUS_PATH),y)
 +ccflags-y += -DKSU_SUSFS_SUS_PATH
 +endif
-+ifdef KSU_SUSFS_SUS_MOUNT
++ifeq ($(CONFIG_KSU_SUSFS_SUS_MOUNT),y)
 +ccflags-y += -DKSU_SUSFS_SUS_MOUNT
 +endif
-+ifdef KSU_SUSFS_SUS_MOUNT_MNT_ID_REORDER
++ifeq ($(CONFIG_KSU_SUSFS_SUS_MOUNT_MNT_ID_REORDER),y)
 +ccflags-y += -DKSU_SUSFS_SUS_MOUNT_MNT_ID_REORDER
 +endif
-+ifdef KSU_SUSFS_SUS_KSTAT
++ifeq ($(CONFIG_KSU_SUSFS_SUS_KSTAT),y)
 +ccflags-y += -DKSU_SUSFS_SUS_KSTAT
 +endif
-+ifdef KSU_SUSFS_SUS_MAPS
++ifeq ($(CONFIG_KSU_SUSFS_SUS_MAPS),y)
 +ccflags-y += -DKSU_SUSFS_SUS_MAPS
 +endif
-+ifdef KSU_SUSFS_SUS_PROC_FD_LINK
++ifeq ($(CONFIG_KSU_SUSFS_SUS_PROC_FD_LINK),y)
 +ccflags-y += -DKSU_SUSFS_SUS_PROC_FD_LINK
 +endif
-+ifdef KSU_SUSFS_SUS_MEMFD
++ifeq ($(CONFIG_KSU_SUSFS_SUS_MEMFD),y)
 +ccflags-y += -DKSU_SUSFS_SUS_MEMFD
 +endif
-+ifdef KSU_SUSFS_TRY_UMOUNT
++ifeq ($(CONFIG_KSU_SUSFS_TRY_UMOUNT),y)
 +ccflags-y += -DKSU_SUSFS_TRY_UMOUNT
 +endif
-+ifdef KSU_SUSFS_SPOOF_UNAME
++ifeq ($(CONFIG_KSU_SUSFS_SPOOF_UNAME),y)
 +ccflags-y += -DKSU_SUSFS_SPOOF_UNAME
 +endif
-+ifdef KSU_SUSFS_ENABLE_LOG
++ifeq ($(CONFIG_KSU_SUSFS_ENABLE_LOG),y)
 +ccflags-y += -DKSU_SUSFS_ENABLE_LOG
 +endif
 +else

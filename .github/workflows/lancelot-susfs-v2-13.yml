@@ -82,6 +82,7 @@ jobs:
           echo "ccflags-y += -DCONFIG_KSU" >> kernel/Makefile
           echo "ccflags-y += -DCONFIG_KSU_WITH_KPROBES" >> kernel/Makefile
           echo "ccflags-y += -DKSU_VERSION=10500" >> kernel/Makefile
+          echo "ccflags-y += -std=gnu11" >> kernel/Makefile
           echo "ccflags-y += -Wno-implicit-function-declaration" >> kernel/Makefile
           echo "ccflags-y += -Wno-strict-prototypes" >> kernel/Makefile
           echo "ccflags-y += -Wno-int-conversion" >> kernel/Makefile

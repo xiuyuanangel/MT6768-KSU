@@ -152,7 +152,7 @@ static const struct av_perm_to_string av_perm_to_string[] = {
 	{ SECCLASS_FILE, FILE__SETATTR, "setattr" },
 	{ SECCLASS_FILE, FILE__LOCK, "lock" },
 	{ SECCLASS_FILE, FILE__RELABELFROM, "relabelfrom" },
-	{ SECCLASS_FILE, FILE__RELabelTO, "relabelto" },
+	{ SECCLASS_FILE, FILE__RELABELTO, "relabelto" },
 	{ SECCLASS_FILE, FILE__APPEND, "append" },
 	{ SECCLASS_FILE, FILE__UNLINK, "unlink" },
 	{ SECCLASS_FILE, FILE__LINK, "link" },
