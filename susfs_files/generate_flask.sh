@@ -174,6 +174,8 @@ static const char * const class_to_string[] = {
 	"cap2_userns",
 	"binder",
 	"process2",
+	"memprotect",
+	"kernel_service",
 	NULL,
 };
 CLASS_EOF
@@ -389,7 +391,9 @@ cat > security/selinux/flask.h << 'FLASK_EOF'
 #define SECCLASS_CAP2_USERNS        129
 #define SECCLASS_BINDER            130
 #define SECCLASS_PROCESS2          131
-#define SECCLASS_MAX                132
+#define SECCLASS_MEMPROTECT        132
+#define SECCLASS_KERNEL_SERVICE    133
+#define SECCLASS_MAX                134
 
 /* Initial SID definitions (also needed by sidtab.h) */
 #define SECINITSID_KERNEL      1
@@ -537,6 +541,31 @@ cat > security/selinux/av_permissions.h << 'AV_PERMISSIONS_EOF'
 /* Process2 permissions */
 #define PROCESS2__NNP_TRANSITION    0x00000001UL
 #define PROCESS2__NOSUID_TRANSITION 0x00000002UL
+
+/* More file permissions */
+#define FILE__MAP                  0x01000000UL
+#define FILE__EXECMOD              0x02000000UL
+
+/* More process permissions */
+#define PROCESS__SHARE             0x00200000UL
+#define PROCESS__NOATSECURE        0x00400000UL
+#define PROCESS__RLIMITINH         0x00800000UL
+#define PROCESS__EXECMEM           0x01000000UL
+#define PROCESS__EXECHEAP          0x02000000UL
+#define PROCESS__EXECSTACK         0x04000000UL
+#define PROCESS__SETPGID           0x08000000UL
+#define PROCESS__GETPGID           0x10000000UL
+
+/* Memprotect permissions */
+#define MEMPROTECT__MMAP_ZERO      0x00000001UL
+
+/* Kernel service permissions */
+#define KERNEL_SERVICE__USE_AS_OVERRIDE  0x00000001UL
+#define KERNEL_SERVICE__CREATE_FILES_AS  0x00000002UL
+
+/* More system permissions */
+#define SYSTEM__MODULE_REQUEST      0x00000008UL
+#define SYSTEM__MODULE_LOAD         0x00000010UL
 
 #endif /* _AV_PERMISSIONS_H_ */
 AV_PERMISSIONS_EOF

@@ -228,13 +228,12 @@ jobs:
         touch $OUTDIR/security/selinux/ss/av_permissions.h
         touch $OUTDIR/security/selinux/ss/initial_sid.h
         
-        # 禁用 genheaders 重新生成：用 no-op 脚本替换，防止覆盖完整 flask.h
+        # 禁用 genheaders 覆盖：注释掉 security/selinux/Makefile 中的 genheaders 目标
+        # 同时删除 classmap.h 防止重新生成
         cd $GITHUB_WORKSPACE/action_dir/kernel_tree
-        GENHEADERS=out/scripts/selinux/genheaders/genheaders
-        if [ -f "$GENHEADERS" ]; then
-          mv "$GENHEADERS" "${GENHEADERS}.bak"
-          printf '#!/bin/sh\ntouch "$@"\n' > "$GENHEADERS"
-          chmod +x "$GENHEADERS"
+        sed -i 's/^\(.*\\$(obj)\/flask\.h.*\)/#DISABLED: \1/' security/selinux/Makefile
+        if [ -f security/selinux/include/classmap.h ]; then
+          mv security/selinux/include/classmap.h security/selinux/include/classmap.h.bak
         fi
         
         echo "SELinux headers synced to build output directory"
