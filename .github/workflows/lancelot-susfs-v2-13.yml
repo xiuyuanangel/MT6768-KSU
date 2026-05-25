@@ -210,14 +210,23 @@ jobs:
 
         # 也将 flask.h 复制到 build 目录，覆盖 genheaders 的输出
         OUTDIR=$GITHUB_WORKSPACE/action_dir/kernel_tree/out
+        SRC=$GITHUB_WORKSPACE/action_dir/kernel_tree/security/selinux
         mkdir -p $OUTDIR/security/selinux/
-        cp -f $GITHUB_WORKSPACE/action_dir/kernel_tree/security/selinux/flask.h $OUTDIR/security/selinux/flask.h
-        cp -f $GITHUB_WORKSPACE/action_dir/kernel_tree/security/selinux/av_permissions.h $OUTDIR/security/selinux/av_permissions.h
-        cp -f $GITHUB_WORKSPACE/action_dir/kernel_tree/security/selinux/initial_sid.h $OUTDIR/security/selinux/initial_sid.h
+        cp -f $SRC/flask.h $OUTDIR/security/selinux/flask.h
+        cp -f $SRC/av_permissions.h $OUTDIR/security/selinux/av_permissions.h
+        cp -f $SRC/initial_sid.h $OUTDIR/security/selinux/initial_sid.h
         mkdir -p $OUTDIR/security/selinux/ss
-        cp -f $GITHUB_WORKSPACE/action_dir/kernel_tree/security/selinux/flask.h $OUTDIR/security/selinux/ss/flask.h
-        cp -f $GITHUB_WORKSPACE/action_dir/kernel_tree/security/selinux/av_permissions.h $OUTDIR/security/selinux/ss/av_permissions.h
-        cp -f $GITHUB_WORKSPACE/action_dir/kernel_tree/security/selinux/initial_sid.h $OUTDIR/security/selinux/ss/initial_sid.h
+        cp -f $SRC/flask.h $OUTDIR/security/selinux/ss/flask.h
+        cp -f $SRC/av_permissions.h $OUTDIR/security/selinux/ss/av_permissions.h
+        cp -f $SRC/initial_sid.h $OUTDIR/security/selinux/ss/initial_sid.h
+        
+        # 关键：touch 所有文件，让 make 认为它们是最新的，防止 Phase 2 genheaders 重新生成
+        touch $OUTDIR/security/selinux/flask.h
+        touch $OUTDIR/security/selinux/av_permissions.h
+        touch $OUTDIR/security/selinux/initial_sid.h
+        touch $OUTDIR/security/selinux/ss/flask.h
+        touch $OUTDIR/security/selinux/ss/av_permissions.h
+        touch $OUTDIR/security/selinux/ss/initial_sid.h
         
         echo "SELinux headers synced to build output directory"
 

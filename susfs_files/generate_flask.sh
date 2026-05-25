@@ -169,6 +169,9 @@ static const char * const class_to_string[] = {
 	"kcm_socket",
 	"qipcrtr_socket",
 	"smc_socket",
+	"vsock_socket",
+	"cap_userns",
+	"cap2_userns",
 	NULL,
 };
 CLASS_EOF
@@ -379,7 +382,10 @@ cat > security/selinux/flask.h << 'FLASK_EOF'
 #define SECCLASS_KCM_SOCKET         124
 #define SECCLASS_QIPCRTR_SOCKET     125
 #define SECCLASS_SMC_SOCKET         126
-#define SECCLASS_MAX                127
+#define SECCLASS_VSOCK_SOCKET       127
+#define SECCLASS_CAP_USERNS         128
+#define SECCLASS_CAP2_USERNS        129
+#define SECCLASS_MAX                130
 
 /* Initial SID definitions (also needed by sidtab.h) */
 #define SECINITSID_KERNEL      1
@@ -495,6 +501,17 @@ cat > security/selinux/av_permissions.h << 'AV_PERMISSIONS_EOF'
 #define PROCESS__NOATSECURITY   0x00004000UL
 #define PROCESS__SIGINH         0x00010000UL
 #define PROCESS__DYNTRANSITION 0x00020000UL
+#define PROCESS__SIGNAL        0x00040000UL
+
+/* File descriptor permissions */
+#define FD__USE                 0x00000001UL
+
+/* Directory permissions */
+#define DIR__ADD_NAME           0x00000001UL
+#define DIR__REMOVE_NAME        0x00000002UL
+#define DIR__SEARCH             0x00000004UL
+#define DIR__RMDIR              0x00000008UL
+#define DIR__REPARENT           0x00000010UL
 
 #endif /* _AV_PERMISSIONS_H_ */
 AV_PERMISSIONS_EOF
