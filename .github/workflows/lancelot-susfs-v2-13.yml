@@ -50,6 +50,9 @@ jobs:
         # 使用 SukiSU-Ultra 的 setup.sh（内置 SUSFS 支持，自动处理 SELinux 头文件）
         curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash
 
+        # 修复 MODULE_IMPORT_NS 兼容性 (kernel 4.14 不支持此宏)
+        sed -i 's/^MODULE_IMPORT_NS.*$/\/\* MODULE_IMPORT_NS not supported on 4.14 - removed \*\//' drivers/kernelsu/ksu.c || true
+
     - name: Apply SUSFS kernel patches
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
