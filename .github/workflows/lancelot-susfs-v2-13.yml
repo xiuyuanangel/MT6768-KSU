@@ -47,8 +47,8 @@ jobs:
     - name: Setup KernelSU with SUSFS (via SukiSU-Ultra)
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        # 使用 SukiSU-Ultra 的 setup.sh，它内置 SUSFS 支持，自动处理 SELinux 头文件
-        curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-dev
+        # 使用 SukiSU-Ultra 的 setup.sh（内置 SUSFS 支持，自动处理 SELinux 头文件）
+        curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash
 
     - name: Apply SUSFS kernel patches
       run: |
@@ -98,6 +98,12 @@ jobs:
             sed -i '/^}$/a #endif' fs/open.c
           }
           rm -f fs/open.c.rej
+        fi
+
+        # 修复 path_umount 未导出问题（SUSFS 需要调用此内部函数）
+        if [ -f fs/internal.h ]; then
+          grep -q 'path_umount' fs/internal.h || \
+            echo 'extern int path_umount(struct path *path, int flags);' >> fs/internal.h
         fi
 
     - name: Configure kernel
