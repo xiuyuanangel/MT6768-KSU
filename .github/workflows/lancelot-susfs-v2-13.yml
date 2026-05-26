@@ -53,6 +53,14 @@ jobs:
         # 修复 MODULE_IMPORT_NS 兼容性 (kernel 4.14 不支持此宏)
         sed -i 's/^MODULE_IMPORT_NS.*$/\/\* MODULE_IMPORT_NS not supported on 4.14 - removed \*\//' drivers/kernelsu/ksu.c || true
 
+        # 修复 allowlist.c 兼容性问题 (kernel 4.14)
+        # 1. TWA_RESUME 在 4.14 中不存在(task_work_add 第三个参数用 true)
+        sed -i 's/TWA_RESUME/true/' drivers/kernelsu/allowlist.c || true
+        # 2. put_task_struct 需要 include <linux/sched/task.h>
+        if ! grep -q 'linux/sched/task.h' drivers/kernelsu/allowlist.c; then
+          sed -i '1s/^/#include <linux\/sched\/task.h>\n/' drivers/kernelsu/allowlist.c
+        fi
+
     - name: Apply SUSFS kernel patches
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
