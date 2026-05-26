@@ -61,6 +61,9 @@ jobs:
           sed -i '1s/^/#include <linux\/sched\/task.h>\n/' drivers/kernelsu/allowlist.c
         fi
 
+        # 修复 app_profile.c: seccomp.filter_count 在 4.14 中不存在
+        sed -i 's/atomic_set(\&.*seccomp\.filter_count.*);$/\/\* seccomp.filter_count not in 4.14 \*\//' drivers/kernelsu/app_profile.c || true
+
     - name: Apply SUSFS kernel patches
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
