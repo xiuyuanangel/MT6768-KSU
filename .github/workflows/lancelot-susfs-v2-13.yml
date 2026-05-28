@@ -66,6 +66,8 @@ jobs:
 
         # 修复 sucompat.c: linux/pgtable.h 在 4.14 中不存在
         sed -i 's/#include <linux\/pgtable.h>/#include <asm\/pgtable.h>/' drivers/kernelsu/sucompat.c || true
+        # strncpy_from_user_nofault 在 4.14 中不存在 (4.19+)
+        sed -i 's/strncpy_from_user_nofault/strncpy_from_user/g' drivers/kernelsu/sucompat.c || true
 
     - name: Apply SUSFS kernel patches
       run: |
